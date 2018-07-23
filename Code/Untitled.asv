@@ -1,0 +1,109 @@
+%% Start of the program.
+clc
+clear
+close all
+
+%% Problem Statement (Shortest Path Problem)
+node=20;
+path=200;
+Source=1;
+Destination=node;
+from=ceil(rand(1,path)*node);
+to=ceil(rand(1,path)*node);
+W =ceil( rand(1,path)*100);
+r(node,node)=[0];
+kk=1;
+for ii=1:path
+    if from(ii)<to(ii)
+        r(from(ii),to(ii))=W(ii);
+        t1(kk)=from(ii);
+        t2(kk)=to(ii);
+        t3(kk)=W(ii);
+        kk=kk+1;
+    end
+end
+h = view(biograph(r,[],'ShowWeights','on','ShowArrows','off'));
+Dir_Cost=r+r';
+% DG=sparse(t1,t2,t3,Node,Node);
+% [dist,path,pred] = graphshortestpath(DG,Source,Destination);
+% if dist==inf
+%     disp('There is not any path for you');
+% else
+%     
+% set(h.Nodes(path),'Color',[1 0.4 0.4]);
+% edges = getedgesbynodeid(h,get(h.Nodes(path),'ID'));
+% set(edges,'LineColor',[1 0 0]);
+% set(edges,'LineWidth',1.5);
+% end
+
+
+%% Algoritm Parameters
+PopSize = 100;
+aa = (1:node)';
+Gens = de2bi(d);
+[bb,GenLength]=size(b);
+ChromLenght = GenLength*Node;
+KeepPercent = 20/100; 
+CrossPercent = 70/100;
+MutatPercent = 1 - KeepPercent - CrossPercent;
+SelectionMode=1;
+
+KeepNum = round(KeepPercent * PopSize);
+CrossNum = round(CrossPercent * PopSize);
+MutatNum = PopSize - KeepNum - CrossNum;
+
+%% Initial Population
+Pop=Pop_Fnc(Dir_Cost,PopSize,Source,Destination,GenLength,ChromLenght,Gens)
+Cost=Cost_Fcn(Pop,Dir_Cost);
+ [Cost Index]=sort(Cost);
+ Pop=Pop(Index,:);
+
+%% MAIN LOOP
+MaxIteration=100;
+MinMat=[];
+MeanMat=[];
+for Iter = 1:MaxIteration
+    %% Select Keep
+    KeepPop=Pop(1:KeepNum,:);
+    %% CrossOver
+    SelectedIndexes=SelectParents_Fcn(Cost,CrossNum,SelectionMode);
+   CrossPop=[];
+    for ii=1:2:CrossNum
+        Par1Index=SelectedIndexes(ii);
+        Par2Index=SelectedIndexes(ii+1);
+        Par1=Pop(Par1Index,:);
+        Par2=Pop(Par2Index,:);
+        [Off1,Off2]=CrossOver_Fcn(Par1,Par2);
+        CrossPop=[CrossPop;Off1;Off2];
+    end
+    %% Mutation
+   for ii=1:MutatNum
+   MutatPop(ii,:)=randperm(CityNum);
+   end
+      
+    %% NewPopulation
+    Pop=[KeepPop;CrossPop;MutatPop];
+     Cost=Cost_Fcn(Pop,CityDistanceMatrix,CityNum);
+     [Cost Index]=sort(Cost);
+     Pop=Pop(Index,:);
+     MinMat=[MinMat min(Cost)];
+     MeanMat=[MeanMat mean(Cost)];
+    
+    %% Display
+    subplot(2,1,1)
+    plot(MinMat,'r','linewidth',2.5);
+    hold on
+    plot(MeanMat,'b','linewidth',2);
+    hold off
+    xlim([1 MaxIteration]);
+    pause(0.05)
+    subplot(2,1,2)
+    plot(XCity(Pop(1,:)),YCity(Pop(1,:)),'r-p')
+
+    
+end
+
+%% Final Result Display
+BestSolution=Pop(1,:);
+BestCost=Cost(1);
+    
